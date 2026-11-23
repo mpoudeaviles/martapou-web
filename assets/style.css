@@ -78,6 +78,7 @@ small {
   scrollbar-width: none;
 }
 .side-nav::-webkit-scrollbar { display: none; }
+.side-nav { padding-bottom: 70px; }
 .side-nav .site-title a { color: var(--text); }
 .side-nav .site-title { margin-bottom: 30px; }
 .side-nav h1 a { color: var(--accent); }
@@ -101,10 +102,22 @@ small {
   font-size: var(--h1-size);
 }
 .top-links a { color: var(--white); margin-left: .4em; }
-.lang a, .lang-mobile a { color: var(--text); opacity: .55; margin: 0; }
-.lang a.on, .lang-mobile a.on { opacity: 1; color: var(--accent); }
-.lang { margin-right: .6em; color: var(--text); }
-.lang-mobile { display: none; }
+.lang-switch {
+  position: fixed; left: 0; bottom: 0; z-index: 12; width: 30%;
+  padding: 14px var(--pad) 18px;
+  font-family: var(--display); font-size: 20px; color: var(--text);
+  background: linear-gradient(to bottom, rgba(0,0,0,0), #000 35%);
+}
+.lang-switch a { color: var(--text); opacity: .55; }
+.lang-switch a.on { opacity: 1; color: var(--accent); }
+.lang-switch a:hover { opacity: 1; }
+
+/* título: "Marta" arriba y "Pou de Avilés" abajo, siempre igual */
+.site-title .t1, .site-title .t2 { display: block; white-space: nowrap; }
+
+/* evitar palabras sueltas al final de párrafo */
+.bodycopy, .side-nav, h1 { text-wrap: pretty; }
+h1 { text-wrap: balance; }
 
 /* ---------- contenido ---------- */
 .content {
@@ -163,7 +176,7 @@ small {
 
 /* ---------- home: columna de imágenes ---------- */
 .page-home .content { padding-top: 160px; }
-.home-scroll .image-link { display: block; margin-bottom: 10px; }
+.home-scroll .image-link { display: block; margin: 0; line-height: 0; }
 .home-scroll img { width: 100%; }
 
 /* ---------- info ---------- */
@@ -181,9 +194,9 @@ small {
   }
   .nav-lists { display: none; padding-top: .8em; }
   .side-nav.open .nav-lists { display: block; }
-  .top-links { position: absolute; top: 14px; right: var(--pad); font-size: 20px; }
-  .top-links > a { display: none; }
-  .side-nav .site-title { padding-right: 70px; }
+  .top-links { display: none; }
+  .lang-switch { width: auto; padding: 8px 14px 10px var(--pad); font-size: 18px; background: #000; }
+  .content { padding-bottom: 60px; }
   .page-project .bodycopy > h1:first-child { padding-right: 0; }
   .content { width: 100%; }
   .page-project .bodycopy { padding-right: 0; }

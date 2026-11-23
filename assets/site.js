@@ -1,5 +1,20 @@
-// martapou.com — slideshows, menú móvil y scroll automático de la home
+// martapou.com — título, menú móvil, viudas, slideshows y scroll automático de la portada
 (function () {
+  // ---- título: "Pou de Avilés" ocupa todo el ancho de la columna; "Marta" usa el mismo tamaño
+  var title = document.querySelector('.site-title');
+  function fitTitle() {
+    if (!title) return;
+    var line = title.querySelector('.t2');
+    var max = window.innerWidth <= 800 ? 64 : 96;
+    var avail = title.clientWidth;
+    title.style.fontSize = '100px';
+    var w = line.scrollWidth || 1;
+    title.style.fontSize = Math.min(max, Math.floor(100 * avail / w * 0.98)) + 'px';
+  }
+  fitTitle();
+  window.addEventListener('resize', fitTitle);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
+
   // ---- menú en móvil
   var nav = document.getElementById('side-nav');
   var btn = nav && nav.querySelector('.menu-toggle');
@@ -10,19 +25,39 @@
     btn.textContent = open ? btn.dataset.close : btn.dataset.open;
   });
 
-  // ---- slideshows (autoplay 2.5 s, flechas, clic = siguiente)
+  // ---- evitar viudas: une la última palabra de cada línea de texto con la anterior
+  var BLOCK = /^(BR|DIV|P|LI|H1|H2|OL|UL|SMALL|IMG|IFRAME|VIDEO)$/;
+  function lastOfLine(node) {
+    var n = node.nextSibling;
+    while (n && n.nodeType === 3 && !n.nodeValue.trim()) n = n.nextSibling;
+    if (!n) {
+      var p = node.parentNode;
+      return p && !BLOCK.test(p.tagName) && p !== document.body ? lastOfLine(p) : true;
+    }
+    return n.nodeType === 1 && BLOCK.test(n.tagName);
+  }
+  document.querySelectorAll('.bodycopy, .side-nav').forEach(function (root) {
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    var nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function (t) {
+      var v = t.nodeValue;
+      if (!v.trim() || !lastOfLine(t)) return;
+      t.nodeValue = v.replace(/ (\S{1,14})(\s*)$/, ' $1$2');
+    });
+  });
+
+  // ---- slideshows (autoplay 2.5 s, flechas)
   document.querySelectorAll('.image-gallery').forEach(function (g) {
     var slides = Array.prototype.slice.call(g.children);
     if (slides.length < 2) return;
-    // altura: la proporción de la imagen más alta, limitada a 80% de la pantalla
     var ratio = 0;
     slides.forEach(function (s) {
       var img = s.tagName === 'IMG' ? s : s.querySelector('img');
       if (img) ratio = Math.max(ratio, (+img.getAttribute('height') || 1) / (+img.getAttribute('width') || 1));
     });
     function size() {
-      var h = Math.min(g.clientWidth * (ratio || 0.66), window.innerHeight * 0.8);
-      g.style.height = h + 'px';
+      g.style.height = Math.min(g.clientWidth * (ratio || 0.66), window.innerHeight * 0.8) + 'px';
     }
     size();
     window.addEventListener('resize', size);
@@ -41,8 +76,9 @@
       slides[i].classList.add('on');
     }
     var speed = (parseFloat(g.dataset.speed) || 2.5) * 1000;
-    var timer = setInterval(function () { show(i + 1); }, speed);
+    var timer;
     function restart() { clearInterval(timer); timer = setInterval(function () { show(i + 1); }, speed); }
+    restart();
 
     var prev = document.createElement('button');
     prev.className = 'gallery-arrow prev-btn'; prev.setAttribute('aria-label', 'Previous'); prev.textContent = '←';
@@ -53,18 +89,30 @@
     g.appendChild(prev); g.appendChild(next);
   });
 
-  // ---- home: la columna de imágenes baja sola y vuelve arriba al final
+  // ---- portada: las imágenes bajan solas; si haces scroll a mano se para
+  //      y a los 2 segundos sigue desde donde lo has dejado
   if (document.getElementById('home-scroll') &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var paused = false, t;
-    function pause() { paused = true; clearTimeout(t); t = setTimeout(function () { paused = false; }, 2500); }
-    ['wheel', 'touchstart', 'keydown'].forEach(function (ev) { window.addEventListener(ev, pause, { passive: true }); });
-    (function step() {
-      if (!paused) {
-        window.scrollBy(0, 1);
-        if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 1) window.scrollTo(0, 0);
+    var SPEED = 1;            // píxeles por fotograma
+    var pos = window.scrollY;
+    var pausedUntil = 0;
+    function userScrolled() { pausedUntil = performance.now() + 2000; }
+    ['wheel', 'touchstart', 'touchmove', 'keydown', 'mousedown'].forEach(function (ev) {
+      window.addEventListener(ev, userScrolled, { passive: true });
+    });
+    (function step(now) {
+      if (now < pausedUntil) {
+        pos = window.scrollY;                 // seguir desde donde se ha quedado
+      } else if (Math.abs(window.scrollY - pos) > 3) {
+        pos = window.scrollY;                 // la barra de scroll también cuenta
+        userScrolled();
+      } else {
+        pos += SPEED;
+        var maxY = document.documentElement.scrollHeight - window.innerHeight;
+        if (pos >= maxY - 1) pos = 0;
+        window.scrollTo(0, pos);
       }
       requestAnimationFrame(step);
-    })();
+    })(performance.now());
   }
 })();
