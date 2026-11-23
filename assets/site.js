@@ -204,9 +204,10 @@
     else tipEl.classList.remove('on');
   });
   document.addEventListener('mousemove', function (e) {
-    var x = e.clientX + 18, y = e.clientY + 20;
-    var w = tipEl.offsetWidth;
+    var w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    var x = e.clientX + 16, y = e.clientY - h - 10;
     if (x + w > window.innerWidth - 8) x = e.clientX - w - 12;
+    if (y < 6) y = e.clientY + 22;
     tipEl.style.transform = 'translate(' + x + 'px,' + y + 'px)';
   });
 
