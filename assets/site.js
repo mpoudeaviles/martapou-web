@@ -11,9 +11,16 @@
     var w = line.scrollWidth || 1;
     title.style.fontSize = Math.min(max, Math.floor(100 * avail / w * 0.98)) + 'px';
   }
-  fitTitle();
-  window.addEventListener('resize', fitTitle);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
+  // el aro de la portada ocupa más o menos lo mismo que el nombre
+  function sizeRing() {
+    var ring = document.querySelector('.ring');
+    if (!ring || !title || window.innerWidth <= 800) return;
+    var s = Math.round(Math.max(140, Math.min(220, title.offsetHeight * 1.35)));
+    ring.style.width = ring.style.height = s + 'px';
+  }
+  fitTitle(); sizeRing();
+  window.addEventListener('resize', function () { fitTitle(); sizeRing(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitTitle(); sizeRing(); });
 
   // ---- menú en móvil
   var nav = document.getElementById('side-nav');
