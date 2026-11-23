@@ -89,30 +89,124 @@
     g.appendChild(prev); g.appendChild(next);
   });
 
-  // ---- portada: las imágenes bajan solas; si haces scroll a mano se para
-  //      y a los 2 segundos sigue desde donde lo has dejado
+
+  // ---- vídeos de YouTube / Vimeo: se reproducen solos (sin sonido) cuando los ves,
+  //      se pausan al salir de pantalla, con botón para activar el sonido.
+  //      Se tapa con la miniatura mientras no está reproduciendo, para que no se vea
+  //      el nombre del canal ni el logo de YouTube / Vimeo.
+  var ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+  var ICON_ON = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+  var videos = document.querySelectorAll('.video[data-yt], .video[data-vimeo]');
+  var apiWaiters = { yt: [], vimeo: [] }, apiLoading = {};
+  function loadScript(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb || null; document.head.appendChild(s); }
+  function whenYT(cb) {
+    if (window.YT && YT.Player) return cb();
+    apiWaiters.yt.push(cb);
+    if (!apiLoading.yt) {
+      apiLoading.yt = true;
+      window.onYouTubeIframeAPIReady = function () { apiWaiters.yt.forEach(function (f) { f(); }); };
+      loadScript('https://www.youtube.com/iframe_api');
+    }
+  }
+  function whenVimeo(cb) {
+    if (window.Vimeo && Vimeo.Player) return cb();
+    apiWaiters.vimeo.push(cb);
+    if (!apiLoading.vimeo) {
+      apiLoading.vimeo = true;
+      loadScript('https://player.vimeo.com/api/player.js', function () { apiWaiters.vimeo.forEach(function (f) { f(); }); });
+    }
+  }
+  videos.forEach(function (box) {
+    box.innerHTML = '<div class="v-frame"><div></div></div><div class="v-poster"></div>' +
+                    '<button class="v-sound" aria-label="Sound on/off">' + ICON_OFF + '</button>';
+    var poster = box.querySelector('.v-poster'), frame = box.querySelector('.v-frame > div');
+    var btn = box.querySelector('.v-sound');
+    var player = null, visible = false, muted = true, showTimer;
+
+    // miniatura
+    if (box.dataset.yt) {
+      var hi = 'https://i.ytimg.com/vi/' + box.dataset.yt + '/maxresdefault.jpg';
+      var test = new Image();
+      test.onload = function () { poster.style.backgroundImage = 'url(' + (test.naturalWidth > 200 ? hi : 'https://i.ytimg.com/vi/' + box.dataset.yt + '/hqdefault.jpg') + ')'; };
+      test.src = hi;
+    } else {
+      fetch('https://vimeo.com/api/oembed.json?width=1280&url=' + encodeURIComponent('https://vimeo.com/' + box.dataset.vimeo + (box.dataset.h ? '/' + box.dataset.h : '')))
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d.thumbnail_url) poster.style.backgroundImage = 'url(' + d.thumbnail_url.replace(/_\d+x\d+/, '_1280') + ')'; })
+        .catch(function () {});
+    }
+    function playing(on) {
+      clearTimeout(showTimer);
+      if (on) showTimer = setTimeout(function () { box.classList.add('playing'); }, 900);
+      else box.classList.remove('playing');
+    }
+
+    function create() {
+      if (box.dataset.yt) {
+        whenYT(function () {
+          var id = box.dataset.yt;
+          player = new YT.Player(frame, {
+            videoId: id,
+            playerVars: { autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: id, playsinline: 1,
+                          rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, modestbranding: 1 },
+            events: {
+              onReady: function (e) { e.target.mute(); if (visible) e.target.playVideo(); else e.target.pauseVideo(); },
+              onStateChange: function (e) {
+                if (e.data === 1) playing(true);
+                else if (e.data === 2 || e.data === -1) playing(false);
+                else if (e.data === 0) { e.target.seekTo(0); e.target.playVideo(); }
+              }
+            }
+          });
+          player.kind = 'yt';
+        });
+      } else {
+        whenVimeo(function () {
+          var iframe = document.createElement('iframe');
+          iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+          iframe.src = 'https://player.vimeo.com/video/' + box.dataset.vimeo + '?' + (box.dataset.h ? 'h=' + box.dataset.h + '&' : '') +
+                       'autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1&autopause=0';
+          frame.parentNode.replaceChild(iframe, frame);
+          player = new Vimeo.Player(iframe);
+          player.kind = 'vimeo';
+          player.on('playing', function () { playing(true); });
+          player.on('pause', function () { playing(false); });
+          player.ready().then(function () { if (!visible) player.pause(); });
+        });
+      }
+    }
+    function play() { if (!player) return create(); player.kind === 'yt' ? player.playVideo && player.playVideo() : player.play().catch(function () {}); }
+    function pause() { if (!player) return; player.kind === 'yt' ? player.pauseVideo && player.pauseVideo() : player.pause().catch(function () {}); }
+
+    btn.addEventListener('click', function () {
+      if (!player) return;
+      muted = !muted;
+      if (player.kind === 'yt') { if (muted) player.mute(); else { player.unMute(); player.setVolume(100); } }
+      else { player.setMuted(muted); if (!muted) player.setVolume(1); }
+      btn.innerHTML = muted ? ICON_OFF : ICON_ON;
+      box.classList.toggle('sound-on', !muted);
+    });
+
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { visible = en.intersectionRatio >= 0.5; visible ? play() : pause(); });
+      }, { threshold: [0, 0.5, 1] }).observe(box);
+    } else { visible = true; play(); }
+  });
+
+  // ---- portada: las imágenes bajan solas sin parar; si haces scroll a mano,
+  //      sigue bajando desde donde lo hayas dejado
   if (document.getElementById('home-scroll') &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     var SPEED = 1;            // píxeles por fotograma
     var pos = window.scrollY;
-    var pausedUntil = 0;
-    function userScrolled() { pausedUntil = performance.now() + 2000; }
-    ['wheel', 'touchstart', 'touchmove', 'keydown', 'mousedown'].forEach(function (ev) {
-      window.addEventListener(ev, userScrolled, { passive: true });
-    });
-    (function step(now) {
-      if (now < pausedUntil) {
-        pos = window.scrollY;                 // seguir desde donde se ha quedado
-      } else if (Math.abs(window.scrollY - pos) > 3) {
-        pos = window.scrollY;                 // la barra de scroll también cuenta
-        userScrolled();
-      } else {
-        pos += SPEED;
-        var maxY = document.documentElement.scrollHeight - window.innerHeight;
-        if (pos >= maxY - 1) pos = 0;
-        window.scrollTo(0, pos);
-      }
+    (function step() {
+      if (Math.abs(window.scrollY - pos) > 2) pos = window.scrollY;   // el usuario ha movido el scroll
+      pos += SPEED;
+      var maxY = document.documentElement.scrollHeight - window.innerHeight;
+      if (pos >= maxY - 1) pos = 0;
+      window.scrollTo(0, pos);
       requestAnimationFrame(step);
-    })(performance.now());
+    })();
   }
 })();
