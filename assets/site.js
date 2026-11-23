@@ -148,11 +148,11 @@
           player = new YT.Player(frame, {
             videoId: id,
             playerVars: { autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: id, playsinline: 1,
-                          rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, modestbranding: 1 },
+                          rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, modestbranding: 1, cc_load_policy: 0 },
             events: {
-              onReady: function (e) { e.target.mute(); if (visible) e.target.playVideo(); else e.target.pauseVideo(); },
+              onReady: function (e) { try { e.target.unloadModule('captions'); e.target.unloadModule('cc'); } catch (x) {} e.target.mute(); if (visible) e.target.playVideo(); else e.target.pauseVideo(); },
               onStateChange: function (e) {
-                if (e.data === 1) playing(true);
+                if (e.data === 1) { try { e.target.unloadModule('captions'); } catch (x) {} playing(true); }
                 else if (e.data === 2 || e.data === -1) playing(false);
                 else if (e.data === 0) { e.target.seekTo(0); e.target.playVideo(); }
               }
