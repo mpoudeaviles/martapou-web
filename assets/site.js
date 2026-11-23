@@ -194,18 +194,56 @@
     } else { visible = true; play(); }
   });
 
-  // ---- portada: las imágenes bajan solas sin parar; si haces scroll a mano,
-  //      sigue bajando desde donde lo hayas dejado
-  if (document.getElementById('home-scroll') &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var SPEED = 1;            // píxeles por fotograma
+  // ---- resumen amarillo junto al ratón al pasar por un proyecto
+  var tipEl = document.createElement('div');
+  tipEl.id = 'tip';
+  document.body.appendChild(tipEl);
+  document.addEventListener('mouseover', function (e) {
+    var t = e.target.closest && e.target.closest('[data-tip]');
+    if (t) { tipEl.textContent = t.getAttribute('data-tip'); tipEl.classList.add('on'); }
+    else tipEl.classList.remove('on');
+  });
+  document.addEventListener('mousemove', function (e) {
+    var x = e.clientX + 18, y = e.clientY + 20;
+    var w = tipEl.offsetWidth;
+    if (x + w > window.innerWidth - 8) x = e.clientX - w - 12;
+    tipEl.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+  });
+
+  // ---- portada: scroll infinito que no para; si haces scroll a mano sigue desde ahí
+  var list = document.getElementById('home-scroll');
+  if (list) {
+    var originals = Array.prototype.slice.call(list.children);
+    function addCopy() {
+      originals.forEach(function (n) {
+        var c = n.cloneNode(true);
+        c.setAttribute('aria-hidden', 'true'); c.setAttribute('tabindex', '-1');
+        list.appendChild(c);
+      });
+    }
+    addCopy();
+    var loopH = 0;
+    function measure() {
+      loopH = list.children[originals.length].offsetTop - originals[0].offsetTop;
+      // asegurar que siempre hay imágenes por debajo de la pantalla
+      while (list.offsetHeight - loopH < window.innerHeight * 1.5 && list.children.length < originals.length * 6) {
+        addCopy();
+      }
+    }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+    list.querySelectorAll('img').forEach(function (im) { im.addEventListener('load', measure); });
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var SPEED = 1;             // píxeles por fotograma
     var pos = window.scrollY;
     (function step() {
       if (Math.abs(window.scrollY - pos) > 2) pos = window.scrollY;   // el usuario ha movido el scroll
-      pos += SPEED;
-      var maxY = document.documentElement.scrollHeight - window.innerHeight;
-      if (pos >= maxY - 1) pos = 0;
-      window.scrollTo(0, pos);
+      if (!reduce) pos += SPEED;
+      var start = originals[0].offsetTop;
+      if (loopH > 0 && pos >= start + loopH) pos -= loopH;          // vuelve a empezar sin salto
+      if (!reduce || Math.abs(window.scrollY - pos) > 1) window.scrollTo(0, pos);
       requestAnimationFrame(step);
     })();
   }
