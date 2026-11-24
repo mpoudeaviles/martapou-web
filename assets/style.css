@@ -361,3 +361,13 @@ body:not(.page-home) .side-nav { padding-bottom: 70px; }
 /* títulos de las páginas de proyecto, del tamaño de "Projects" */
 .bodycopy h1 { font-size: 30px; line-height: 1.15; -webkit-text-stroke: .45px currentColor; }
 .page-project .bodycopy > h1:first-child { margin-bottom: 4px; }
+
+/* páginas secundarias: "About me" + iconos abajo a la izquierda, sobre la franja negra */
+@media (min-width: 801px) {
+  body:not(.page-home) .nav-foot {
+    position: fixed; left: var(--pad); bottom: 0; z-index: 13;
+    width: calc(30% - 2 * var(--pad)); padding-bottom: 12px;
+  }
+  body:not(.page-home) .nav-foot h1 { font-size: var(--h1-size); -webkit-text-stroke: 0; }
+  body:not(.page-home) .side-nav { z-index: 13; }
+}

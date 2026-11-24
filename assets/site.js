@@ -22,8 +22,12 @@
     var room = r.right - r1.right - 16;                       // hueco a la derecha de "Marta"
     var s = Math.round(Math.max(90, Math.min(110, room, fs * 1.7)));
     ring.style.width = ring.style.height = s + 'px';
-    ring.style.left = (r.right - s + 22) + 'px';   // un poco más a la derecha
-    ring.style.top = Math.max(4, r1.top + r1.height / 2 - s / 2 - 12) + 'px';
+    var top = Math.max(4, r1.top + r1.height / 2 - s / 2 - 12);
+    var left = r.right - s + 22;                              // un poco más a la derecha
+    var limit = t2.getBoundingClientRect().top + fs * 0.12;   // no tocar "Pou de Avilés"
+    if (top + s > limit) left = Math.max(left, r.right - s * 0.3);
+    ring.style.left = left + 'px';
+    ring.style.top = top + 'px';
   }
   fitTitle(); sizeRing();
   window.addEventListener('resize', function () { fitTitle(); sizeRing(); });
