@@ -13,10 +13,17 @@
   }
   // el aro de la portada ocupa más o menos lo mismo que el nombre
   function sizeRing() {
+    // aro pequeño en la esquina derecha del nombre, a la derecha de "Marta"
     var ring = document.querySelector('.ring');
     if (!ring || !title || window.innerWidth <= 800) return;
-    var s = Math.round(Math.max(140, Math.min(220, title.offsetHeight * 1.35)));
+    var t1 = title.querySelector('.t1'), t2 = title.querySelector('.t2');
+    var r = title.getBoundingClientRect(), r1 = t1.getBoundingClientRect();
+    var fs = parseFloat(getComputedStyle(title).fontSize);
+    var room = r.right - r1.right - 16;                       // hueco a la derecha de "Marta"
+    var s = Math.round(Math.max(90, Math.min(110, room, fs * 1.7)));
     ring.style.width = ring.style.height = s + 'px';
+    ring.style.left = (r.right - s) + 'px';
+    ring.style.top = Math.max(6, r1.top + r1.height / 2 - s / 2 - 4) + 'px';
   }
   fitTitle(); sizeRing();
   window.addEventListener('resize', function () { fitTitle(); sizeRing(); });
