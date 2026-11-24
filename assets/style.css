@@ -481,6 +481,10 @@ body:not(.page-home) .side-nav { padding-bottom: 70px; }
   .page-home.index-open .nav-lists h1 { font-size: 30px; margin-bottom: 8px; }
   .page-home.index-open .m-bar { background: #000; mix-blend-mode: normal; }
   .page-home.index-open .lang-switch { mix-blend-mode: normal; }
-  .page-home.index-open .m-index, .page-home.index-open .m-about { display: none; }
+  .page-home.index-open .m-index { display: none; }
+  .page-home.index-open .m-about { color: var(--accent) !important; }
   .page-home.index-open .m-back { display: block; }
 }
+
+/* en la página de About me no hace falta el enlace a About me */
+@media (max-width: 800px) { .page-info .m-about { display: none; } }
