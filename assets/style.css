@@ -362,12 +362,36 @@ body:not(.page-home) .side-nav { padding-bottom: 70px; }
 .bodycopy h1 { font-size: 30px; line-height: 1.15; -webkit-text-stroke: .45px currentColor; }
 .page-project .bodycopy > h1:first-child { margin-bottom: 4px; }
 
-/* páginas secundarias: "About me" + iconos abajo a la izquierda, sobre la franja negra */
+
+/* ---------- bloque "Hi! Nice to meet you" + "Read more": un solo enlace ---------- */
+.nav-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-top: 1.3em; }
+.about-link { display: block; color: var(--text); flex: 1 1 auto; min-width: 0; }
+.about-link .hi { display: block; font-family: var(--display); font-size: var(--h1-size); line-height: 1.15; color: var(--accent); }
+.about-link .intro { display: block; margin: 4px 0 6px; color: var(--text); }
+.about-link .more {
+  display: inline-block; font-family: var(--display); font-size: var(--h1-size); line-height: 1.4;
+  color: var(--accent); border-bottom: 1.5px solid var(--accent);
+}
+.about-link .arrow { display: inline-block; transition: transform .2s; }
+.about-link:hover .hi, .about-link:hover .more { color: var(--yellow); border-color: var(--yellow); }
+.about-link:hover .intro { color: var(--white); }
+.about-link:hover .arrow { transform: translateX(5px); }
+.nav-foot .social { padding-bottom: 6px; }
+/* EN / ES con la misma altura de línea para alinear por abajo */
+.lang-switch { line-height: 1.4; }
+
 @media (min-width: 801px) {
-  body:not(.page-home) .nav-foot {
-    position: fixed; left: var(--pad); bottom: 0; z-index: 13;
-    width: calc(30% - 2 * var(--pad)); padding-bottom: 12px;
+  /* el bloque va fijo abajo a la izquierda, alineado por abajo con EN / ES */
+  .nav-foot {
+    position: fixed; left: var(--pad); bottom: 16px; z-index: 13; margin: 0;
+    width: calc(30% - 2 * var(--pad));
   }
-  body:not(.page-home) .nav-foot h1 { font-size: var(--h1-size); -webkit-text-stroke: 0; }
+  .side-nav { padding-bottom: 170px; }
   body:not(.page-home) .side-nav { z-index: 13; }
+  /* en las páginas secundarias, la franja negra crece para que quepa el bloque */
+  body:not(.page-home) .lang-switch { padding-top: 0; }
+  body:not(.page-home)::after {
+    content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 56px; background: #000; z-index: 11;
+  }
+  body:not(.page-home) .lang-switch { background: transparent; }
 }
