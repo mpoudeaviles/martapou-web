@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 372">
+  <g transform="rotate(-14 250 186)">
+    <ellipse cx="250" cy="186" rx="238" ry="150" fill="#f7e61c" stroke="#000" stroke-width="3"/>
+    <text x="250" y="166" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="37" fill="#000">¡Haz clic en cualquier</text>
+    <text x="250" y="210" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="37" fill="#000">imagen para saber más!</text>
+  </g>
+</svg>

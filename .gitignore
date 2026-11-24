@@ -1,0 +1,4 @@
+_editar/pages_ocultas.py
+__pycache__/
+*.pyc
+.DS_Store
