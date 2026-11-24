@@ -90,15 +90,18 @@
   });
 
 
-  // ---- vídeos de YouTube / Vimeo: se reproducen solos (sin sonido) cuando los ves,
-  //      se pausan al salir de pantalla, con botón para activar el sonido.
-  //      Se tapa con la miniatura mientras no está reproduciendo, para que no se vea
-  //      el nombre del canal ni el logo de YouTube / Vimeo.
+  // ---- vídeos de YouTube / Vimeo
+  //  · empiezan solos (sin sonido) cuando el vídeo está entero dentro de la pantalla
+  //  · se pausan al salir
+  //  · la portada del vídeo tapa todo hasta que el vídeo se mueve de verdad
+  //  · los rótulos de YouTube/Vimeo quedan recortados fuera del recuadro
+  //  · al pasar el ratón: botón de pausa/play y de sonido
   var ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
   var ICON_ON = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
-  var videos = document.querySelectorAll('.video[data-yt], .video[data-vimeo]');
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/></svg>';
+  var ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg>';
   var apiWaiters = { yt: [], vimeo: [] }, apiLoading = {};
-  function loadScript(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb || null; document.head.appendChild(s); }
+  function loadScript(src, cb) { var sc = document.createElement('script'); sc.src = src; sc.onload = cb || null; document.head.appendChild(sc); }
   function whenYT(cb) {
     if (window.YT && YT.Player) return cb();
     apiWaiters.yt.push(cb);
@@ -116,14 +119,15 @@
       loadScript('https://player.vimeo.com/api/player.js', function () { apiWaiters.vimeo.forEach(function (f) { f(); }); });
     }
   }
-  videos.forEach(function (box) {
+  document.querySelectorAll('.video[data-yt], .video[data-vimeo]').forEach(function (box) {
     box.innerHTML = '<div class="v-frame"><div></div></div><div class="v-poster"></div>' +
-                    '<button class="v-sound" aria-label="Sound on/off">' + ICON_OFF + '</button>';
+      '<div class="v-controls"><button class="v-play" aria-label="Pause">' + ICON_PAUSE + '</button>' +
+      '<button class="v-sound" aria-label="Sound on/off">' + ICON_OFF + '</button></div>';
     var poster = box.querySelector('.v-poster'), frame = box.querySelector('.v-frame > div');
-    var btn = box.querySelector('.v-sound');
-    var player = null, visible = false, muted = true, showTimer;
+    var btnSound = box.querySelector('.v-sound'), btnPlay = box.querySelector('.v-play');
+    var player = null, visible = false, muted = true, userPaused = false, watch = null;
 
-    // miniatura
+    // portada del vídeo
     if (box.dataset.yt) {
       var hi = 'https://i.ytimg.com/vi/' + box.dataset.yt + '/maxresdefault.jpg';
       var test = new Image();
@@ -135,10 +139,36 @@
         .then(function (d) { if (d.thumbnail_url) poster.style.backgroundImage = 'url(' + d.thumbnail_url.replace(/_\d+x\d+/, '_1280') + ')'; })
         .catch(function () {});
     }
-    function playing(on) {
-      clearTimeout(showTimer);
-      if (on) showTimer = setTimeout(function () { box.classList.add('playing'); }, 900);
-      else box.classList.remove('playing');
+
+    function shown(on) { box.classList.toggle('playing', on); if (on) box.classList.add('started'); }
+
+    // vigila que el vídeo avance de verdad antes de quitar la portada; si el navegador
+    // no lo ha arrancado, lo vuelve a intentar
+    function startWatch() {
+      clearInterval(watch);
+      var last = -1, tries = 0;
+      watch = setInterval(function () {
+        if (!player || !visible || userPaused) return;
+        tries++;
+        getTime(function (t) {
+          if (t > 0.4 && t !== last && last >= 0) shown(true);
+          else if (tries % 3 === 0) { doPlay(); }
+          last = t;
+        });
+      }, 500);
+    }
+    function getTime(cb) {
+      if (player.kind === 'yt') cb(player.getCurrentTime ? player.getCurrentTime() : 0);
+      else player.getCurrentTime().then(cb).catch(function () { cb(0); });
+    }
+    function doPlay() {
+      if (!player) return;
+      if (player.kind === 'yt') { if (muted && player.mute) player.mute(); player.playVideo && player.playVideo(); }
+      else { if (muted) player.setVolume(0); player.play().catch(function () {}); }
+    }
+    function doPause() {
+      if (!player) return;
+      if (player.kind === 'yt') player.pauseVideo && player.pauseVideo(); else player.pause().catch(function () {});
     }
 
     function create() {
@@ -150,11 +180,15 @@
             playerVars: { autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: id, playsinline: 1,
                           rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, modestbranding: 1, cc_load_policy: 0 },
             events: {
-              onReady: function (e) { try { e.target.unloadModule('captions'); e.target.unloadModule('cc'); } catch (x) {} e.target.mute(); if (visible) e.target.playVideo(); else e.target.pauseVideo(); },
+              onReady: function (e) {
+                try { e.target.unloadModule('captions'); } catch (x) {}
+                e.target.mute();
+                if (visible) doPlay(); else e.target.pauseVideo();
+                startWatch();
+              },
               onStateChange: function (e) {
-                if (e.data === 1) { try { e.target.unloadModule('captions'); } catch (x) {} playing(true); }
-                else if (e.data === 2 || e.data === -1) playing(false);
-                else if (e.data === 0) { e.target.seekTo(0); e.target.playVideo(); }
+                if (e.data === 2 || e.data === -1 || e.data === 3) shown(false);
+                if (e.data === 0) { e.target.seekTo(0); e.target.playVideo(); }
               }
             }
           });
@@ -169,29 +203,43 @@
           frame.parentNode.replaceChild(iframe, frame);
           player = new Vimeo.Player(iframe);
           player.kind = 'vimeo';
-          player.on('playing', function () { playing(true); });
-          player.on('pause', function () { playing(false); });
-          player.ready().then(function () { if (!visible) player.pause(); });
+          player.on('pause', function () { shown(false); });
+          player.on('bufferstart', function () { shown(false); });
+          player.ready().then(function () { if (visible) doPlay(); else player.pause(); startWatch(); });
         });
       }
     }
-    function play() { if (!player) return create(); player.kind === 'yt' ? player.playVideo && player.playVideo() : player.play().catch(function () {}); }
-    function pause() { if (!player) return; player.kind === 'yt' ? player.pauseVideo && player.pauseVideo() : player.pause().catch(function () {}); }
 
-    btn.addEventListener('click', function () {
+    btnSound.addEventListener('click', function () {
       if (!player) return;
       muted = !muted;
       if (player.kind === 'yt') { if (muted) player.mute(); else { player.unMute(); player.setVolume(100); } }
-      else { player.setMuted(muted); if (!muted) player.setVolume(1); }
-      btn.innerHTML = muted ? ICON_OFF : ICON_ON;
+      else { player.setMuted(muted); player.setVolume(muted ? 0 : 1); }
+      btnSound.innerHTML = muted ? ICON_OFF : ICON_ON;
       box.classList.toggle('sound-on', !muted);
     });
+    btnPlay.addEventListener('click', function () {
+      userPaused = !userPaused;
+      if (userPaused) { doPause(); btnPlay.innerHTML = ICON_PLAY; box.classList.add('paused'); }
+      else { doPlay(); btnPlay.innerHTML = ICON_PAUSE; box.classList.remove('paused'); }
+    });
 
+    // empieza cuando el vídeo está entero en pantalla, se pausa cuando sale
+    function check(ratio) {
+      var tall = box.offsetHeight > window.innerHeight * 0.9;
+      var full = ratio >= 0.98 || (tall && ratio >= 0.6);
+      if (full && !visible) {
+        visible = true;
+        if (!player) create(); else if (!userPaused) doPlay();
+      } else if (ratio < 0.4 && visible) {
+        visible = false; doPause();
+      }
+    }
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) { visible = en.intersectionRatio >= 0.5; visible ? play() : pause(); });
-      }, { threshold: [0, 0.5, 1] }).observe(box);
-    } else { visible = true; play(); }
+        entries.forEach(function (en) { check(en.intersectionRatio); });
+      }, { threshold: [0, 0.4, 0.6, 0.98, 1] }).observe(box);
+    } else { check(1); }
   });
 
   // ---- resumen amarillo junto al ratón al pasar por un proyecto
