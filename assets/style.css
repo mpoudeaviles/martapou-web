@@ -398,3 +398,10 @@ body:not(.page-home) .side-nav { padding-bottom: 70px; }
 
 /* portada: fotos a sangre por la derecha */
 .page-home .content { padding-right: 0; }
+
+/* portada: EN / ES e Info / Instagram se invierten según la foto de debajo
+   (blanco sobre fondo oscuro, negro sobre fondo claro) */
+.page-home .lang-switch, .page-home .top-links { mix-blend-mode: difference; color: #fff; }
+.page-home .lang-switch a, .page-home .top-links a { color: #fff; }
+.page-home .lang-switch a.on { color: #fff; opacity: 1; }
+.page-home .lang-switch a:not(.on) { opacity: .5; }
