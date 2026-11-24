@@ -239,6 +239,9 @@
       }
     }
     measure();
+    // empezar ya con fotos en pantalla (el final de la última subiendo), sin franja negra arriba
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, Math.max(0, originals[0].offsetTop + loopH - window.innerHeight * 0.35));
     window.addEventListener('resize', measure);
     window.addEventListener('load', measure);
     list.querySelectorAll('img').forEach(function (im) { im.addEventListener('load', measure); });

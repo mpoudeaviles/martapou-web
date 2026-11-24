@@ -220,8 +220,8 @@ h1 { text-wrap: balance; }
 :root { --yellow: #f7e61c; }
 
 /* cursor amarillo */
-html, body { cursor: url("cursor-arrow.png") 3 2, auto; cursor: -webkit-image-set(url("cursor-arrow.png") 1x, url("cursor-arrow@2x.png") 2x) 3 2, auto; cursor: image-set(url("cursor-arrow.png") 1x, url("cursor-arrow@2x.png") 2x) 3 2, auto; }
-a, button, .gallery-arrow, [data-tip], a * { cursor: url("cursor-hand.png") 10 2, pointer; cursor: -webkit-image-set(url("cursor-hand.png") 1x, url("cursor-hand@2x.png") 2x) 10 2, pointer; cursor: image-set(url("cursor-hand.png") 1x, url("cursor-hand@2x.png") 2x) 10 2, pointer; }
+html, body { cursor: url("cursor-a.png") 2 1, auto; cursor: -webkit-image-set(url("cursor-a.png") 1x, url("cursor-a@2x.png") 2x) 2 1, auto; cursor: image-set(url("cursor-a.png") 1x, url("cursor-a@2x.png") 2x) 2 1, auto; }
+a, button, .gallery-arrow, [data-tip], a * { cursor: url("cursor-h.png") 7 1, pointer; cursor: -webkit-image-set(url("cursor-h.png") 1x, url("cursor-h@2x.png") 2x) 7 1, pointer; cursor: image-set(url("cursor-h.png") 1x, url("cursor-h@2x.png") 2x) 7 1, pointer; }
 
 /* títulos de sección del menú, un poco más grandes y con más cuerpo */
 .side-nav h1 { font-size: 30px; line-height: 1.15; -webkit-text-stroke: .45px currentColor; margin-bottom: 2px; }
@@ -352,3 +352,8 @@ a, button, .gallery-arrow, [data-tip], a * { cursor: url("cursor-hand.png") 10 2
   .info-f .line { font-size: 26px; }
   .info-f .cols { grid-template-columns: 1fr; }
 }
+
+/* páginas secundarias: franja negra abajo detrás del EN / ES y espacio extra al final */
+body:not(.page-home) .lang-switch { left: 0; background: #000; text-align: right; padding-top: 12px; }
+body:not(.page-home) .content { padding-bottom: 90px; }
+body:not(.page-home) .side-nav { padding-bottom: 70px; }
