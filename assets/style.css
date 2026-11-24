@@ -462,3 +462,25 @@ body:not(.page-home) .side-nav { padding-bottom: 70px; }
   .page-home .m-about { left: var(--pad); transform: none; color: #fff !important; }
   .page-home .m-bar, .page-home .lang-switch { mix-blend-mode: difference; }
 }
+
+/* móvil, portada: barra de abajo con "…" (índice) · About me · EN / ES */
+@media (max-width: 800px) {
+  .m-index {
+    display: none; position: absolute; top: 0; left: var(--pad); height: 54px; padding: 0 6px 0 0;
+    background: none; border: 0; color: #fff; font: inherit; font-size: 28px; line-height: 44px; letter-spacing: 1px;
+  }
+  .page-home .m-index { display: block; }
+  .page-home .m-about { left: 50%; transform: translateX(-50%); }
+
+  /* índice abierto: lista de proyectos a pantalla completa bajo el nombre */
+  .page-home.index-open .nav-lists {
+    display: block !important; position: fixed; left: 0; right: 0; top: var(--m-head, 120px); bottom: 54px;
+    overflow-y: auto; background: #000; z-index: 14; padding: 18px var(--pad) 30px;
+    font-size: 22px; line-height: 1.45;
+  }
+  .page-home.index-open .nav-lists h1 { font-size: 30px; margin-bottom: 8px; }
+  .page-home.index-open .m-bar { background: #000; mix-blend-mode: normal; }
+  .page-home.index-open .lang-switch { mix-blend-mode: normal; }
+  .page-home.index-open .m-index, .page-home.index-open .m-about { display: none; }
+  .page-home.index-open .m-back { display: block; }
+}

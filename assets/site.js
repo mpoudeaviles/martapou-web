@@ -21,6 +21,17 @@
   window.addEventListener('resize', fitTitle);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
 
+  // ---- móvil, portada: "…" abre el índice de proyectos; "←" lo cierra
+  var idxBtn = document.querySelector('.m-index'), backBtn = document.querySelector('.m-back');
+  function setIndex(open) {
+    document.body.classList.toggle('index-open', open);
+    if (idxBtn) idxBtn.setAttribute('aria-expanded', open);
+  }
+  if (idxBtn) idxBtn.addEventListener('click', function () { setIndex(true); });
+  if (backBtn) backBtn.addEventListener('click', function (e) {
+    if (document.body.classList.contains('index-open')) { e.preventDefault(); setIndex(false); }
+  });
+
   // ---- menú en móvil
   var nav = document.getElementById('side-nav');
   var btn = nav && nav.querySelector('.menu-toggle');
