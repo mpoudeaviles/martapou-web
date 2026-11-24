@@ -237,8 +237,8 @@ a, button, .gallery-arrow, [data-tip], a * { cursor: url("cursor-h.png") 7 1, po
 
 /* anillo giratorio de la portada */
 .ring {
-  position: fixed; z-index: 11; width: 92px; height: 92px;
-  left: calc(30% - 27px - 92px); top: 14px; pointer-events: none;
+  position: fixed; z-index: 11; width: 125px; height: 125px;
+  left: calc(32% + 40px); top: 10px; pointer-events: none;
 }
 .ring svg { width: 100%; height: 100%; animation: spin 30s linear infinite; overflow: visible; }
 .ring text { font-family: var(--sans); font-weight: 800; letter-spacing: .3px; }
@@ -364,19 +364,19 @@ body:not(.page-home) .side-nav { padding-bottom: 70px; }
 
 
 /* ---------- bloque "Hi! Nice to meet you" + "Read more": un solo enlace ---------- */
-.nav-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-top: 1.3em; }
+.nav-foot { position: relative; margin-top: 1.3em; }
 .about-link { display: block; color: var(--text); flex: 1 1 auto; min-width: 0; }
-.about-link .hi { display: block; font-family: var(--display); font-size: var(--h1-size); line-height: 1.15; color: var(--accent); }
+.about-link .hi { display: block; font-family: var(--display); font-size: 30px; line-height: 1.15; -webkit-text-stroke: .45px currentColor; color: var(--accent); }
 .about-link .intro { display: block; margin: 4px 0 6px; color: var(--text); }
 .about-link .more {
-  display: inline-block; font-family: var(--display); font-size: var(--h1-size); line-height: 1.4;
-  color: var(--accent); border-bottom: 1.5px solid var(--accent);
+  display: inline-block; font-family: var(--display); font-size: 30px; line-height: 1.25;
+  -webkit-text-stroke: .45px currentColor; color: var(--accent);
 }
 .about-link .arrow { display: inline-block; transition: transform .2s; }
 .about-link:hover .hi, .about-link:hover .more { color: var(--yellow); border-color: var(--yellow); }
 .about-link:hover .intro { color: var(--white); }
 .about-link:hover .arrow { transform: translateX(5px); }
-.nav-foot .social { padding-bottom: 6px; }
+.nav-foot .social { position: absolute; right: 0; bottom: 7px; }
 /* EN / ES con la misma altura de línea para alinear por abajo */
 .lang-switch { line-height: 1.4; }
 

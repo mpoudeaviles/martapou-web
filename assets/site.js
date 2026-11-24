@@ -11,27 +11,9 @@
     var w = line.scrollWidth || 1;
     title.style.fontSize = Math.min(max, Math.floor(100 * avail / w * 0.98)) + 'px';
   }
-  // el aro de la portada ocupa más o menos lo mismo que el nombre
-  function sizeRing() {
-    // aro pequeño en la esquina derecha del nombre, a la derecha de "Marta"
-    var ring = document.querySelector('.ring');
-    if (!ring || !title || window.innerWidth <= 800) return;
-    var t1 = title.querySelector('.t1'), t2 = title.querySelector('.t2');
-    var r = title.getBoundingClientRect(), r1 = t1.getBoundingClientRect();
-    var fs = parseFloat(getComputedStyle(title).fontSize);
-    var room = r.right - r1.right - 16;                       // hueco a la derecha de "Marta"
-    var s = Math.round(Math.max(90, Math.min(110, room, fs * 1.7)));
-    ring.style.width = ring.style.height = s + 'px';
-    var top = Math.max(4, r1.top + r1.height / 2 - s / 2 - 12);
-    var left = r.right - s + 22;                              // un poco más a la derecha
-    var limit = t2.getBoundingClientRect().top + fs * 0.12;   // no tocar "Pou de Avilés"
-    if (top + s > limit) left = Math.max(left, r.right - s * 0.3);
-    ring.style.left = left + 'px';
-    ring.style.top = top + 'px';
-  }
-  fitTitle(); sizeRing();
-  window.addEventListener('resize', function () { fitTitle(); sizeRing(); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitTitle(); sizeRing(); });
+  fitTitle();
+  window.addEventListener('resize', fitTitle);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
 
   // ---- menú en móvil
   var nav = document.getElementById('side-nav');
