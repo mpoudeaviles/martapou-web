@@ -6,10 +6,16 @@
     if (!title) return;
     var line = title.querySelector('.t2');
     var max = window.innerWidth <= 800 ? 64 : 96;
-    var avail = title.clientWidth;
+    var cs = getComputedStyle(title);
+    var avail = title.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     title.style.fontSize = '100px';
     var w = line.scrollWidth || 1;
     title.style.fontSize = Math.min(max, Math.floor(100 * avail / w * 0.98)) + 'px';
+    // móvil, portada: el hueco de arriba mide lo mismo que la cabecera fija con el nombre
+    var nav = document.getElementById('side-nav');
+    if (document.body.classList.contains('page-home') && window.innerWidth <= 800 && nav) {
+      document.documentElement.style.setProperty('--m-head', nav.offsetHeight + 'px');
+    }
   }
   fitTitle();
   window.addEventListener('resize', fitTitle);
