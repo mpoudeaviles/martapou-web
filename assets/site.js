@@ -125,13 +125,20 @@
       loadScript('https://player.vimeo.com/api/player.js', function () { apiWaiters.vimeo.forEach(function (f) { f(); }); });
     }
   }
+  if (document.querySelector('.video[data-yt]')) whenYT(function () {});
+  if (document.querySelector('.video[data-vimeo]')) whenVimeo(function () {});
   document.querySelectorAll('.video[data-yt], .video[data-vimeo]').forEach(function (box) {
     box.innerHTML = '<div class="v-frame"><div></div></div><div class="v-poster"></div>' +
       '<div class="v-controls"><button class="v-play" aria-label="Pause">' + ICON_PAUSE + '</button>' +
       '<button class="v-sound" aria-label="Sound on/off">' + ICON_OFF + '</button></div>';
     var poster = box.querySelector('.v-poster'), frame = box.querySelector('.v-frame > div');
     var btnSound = box.querySelector('.v-sound'), btnPlay = box.querySelector('.v-play');
-    var player = null, visible = false, muted = true, userPaused = false, watch = null;
+    var player = null, visible = false, muted = true, userPaused = false, watch = null, ready = false, warming = false;
+    // precarga: arranca un instante sin que se vea y se pausa, así cuando llegas ya está listo
+    function warm() {
+      if (!player || player.kind !== 'yt' || visible) return;
+      warming = true; player.mute(); player.playVideo();
+    }
 
     // portada del vídeo
     if (box.dataset.yt) {
@@ -157,11 +164,11 @@
         if (!player || !visible || userPaused) return;
         tries++;
         getTime(function (t) {
-          if (t > 0.4 && t !== last && last >= 0) shown(true);
-          else if (tries % 3 === 0) { doPlay(); }
+          if (t > 0.05 && last >= 0 && t !== last) shown(true);
+          else if (tries % 8 === 0) { doPlay(); }
           last = t;
         });
-      }, 500);
+      }, 120);
     }
     function getTime(cb) {
       if (player.kind === 'yt') cb(player.getCurrentTime ? player.getCurrentTime() : 0);
@@ -177,22 +184,27 @@
       if (player.kind === 'yt') player.pauseVideo && player.pauseVideo(); else player.pause().catch(function () {});
     }
 
+    var creating = false;
     function create() {
+      if (creating) return;
+      creating = true;
       if (box.dataset.yt) {
         whenYT(function () {
           var id = box.dataset.yt;
           player = new YT.Player(frame, {
             videoId: id,
-            playerVars: { autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: id, playsinline: 1,
+            playerVars: { autoplay: 0, mute: 1, controls: 0, loop: 1, playlist: id, playsinline: 1,
                           rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, modestbranding: 1, cc_load_policy: 0 },
             events: {
               onReady: function (e) {
                 try { e.target.unloadModule('captions'); } catch (x) {}
                 e.target.mute();
-                if (visible) doPlay(); else e.target.pauseVideo();
+                ready = true;
+                if (visible) doPlay(); else warm();
                 startWatch();
               },
               onStateChange: function (e) {
+                if (e.data === 1 && warming && !visible) { warming = false; e.target.pauseVideo(); e.target.seekTo(0, true); }
                 if (e.data === 2 || e.data === -1 || e.data === 3) shown(false);
                 if (e.data === 0) { e.target.seekTo(0); e.target.playVideo(); }
               }
@@ -205,13 +217,13 @@
           var iframe = document.createElement('iframe');
           iframe.allow = 'autoplay; fullscreen; picture-in-picture';
           iframe.src = 'https://player.vimeo.com/video/' + box.dataset.vimeo + '?' + (box.dataset.h ? 'h=' + box.dataset.h + '&' : '') +
-                       'autoplay=1&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1&autopause=0';
+                       'autoplay=0&muted=1&loop=1&controls=0&title=0&byline=0&portrait=0&dnt=1&playsinline=1&autopause=0';
           frame.parentNode.replaceChild(iframe, frame);
           player = new Vimeo.Player(iframe);
           player.kind = 'vimeo';
           player.on('pause', function () { shown(false); });
           player.on('bufferstart', function () { shown(false); });
-          player.ready().then(function () { if (visible) doPlay(); else player.pause(); startWatch(); });
+          player.ready().then(function () { ready = true; if (visible) doPlay(); startWatch(); });
         });
       }
     }
@@ -236,12 +248,17 @@
       var full = ratio >= 0.98 || (tall && ratio >= 0.6);
       if (full && !visible) {
         visible = true;
-        if (!player) create(); else if (!userPaused) doPlay();
+        if (!player && !creating) create(); else if (player && !userPaused) doPlay();
       } else if (ratio < 0.4 && visible) {
         visible = false; doPause();
       }
     }
     if ('IntersectionObserver' in window) {
+      // cuando el vídeo está a menos de una pantalla y media, se prepara el reproductor
+      var near = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting && !player) { create(); near.disconnect(); } });
+      }, { rootMargin: '150% 0px 150% 0px' });
+      near.observe(box);
       new IntersectionObserver(function (entries) {
         entries.forEach(function (en) { check(en.intersectionRatio); });
       }, { threshold: [0, 0.4, 0.6, 0.98, 1] }).observe(box);
