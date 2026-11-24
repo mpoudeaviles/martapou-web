@@ -22,8 +22,8 @@
     var room = r.right - r1.right - 16;                       // hueco a la derecha de "Marta"
     var s = Math.round(Math.max(90, Math.min(110, room, fs * 1.7)));
     ring.style.width = ring.style.height = s + 'px';
-    ring.style.left = (r.right - s) + 'px';
-    ring.style.top = Math.max(6, r1.top + r1.height / 2 - s / 2 - 4) + 'px';
+    ring.style.left = (r.right - s + 22) + 'px';   // un poco más a la derecha
+    ring.style.top = Math.max(4, r1.top + r1.height / 2 - s / 2 - 12) + 'px';
   }
   fitTitle(); sizeRing();
   window.addEventListener('resize', function () { fitTitle(); sizeRing(); });
