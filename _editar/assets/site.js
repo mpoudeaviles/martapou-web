@@ -239,13 +239,40 @@
       }
     }
 
-    btnSound.addEventListener('click', function () {
-      if (!player) return;
-      muted = !muted;
-      if (player.kind === 'yt') { if (muted) player.mute(); else { player.unMute(); player.setVolume(100); } }
-      else { player.setMuted(muted); player.setVolume(muted ? 0 : 1); }
+    function setSoundIcon() {
       btnSound.innerHTML = muted ? ICON_OFF : ICON_ON;
       box.classList.toggle('sound-on', !muted);
+    }
+    btnSound.addEventListener('click', function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      if (!player) return;
+      muted = !muted;
+      if (player.kind === 'yt') {
+        if (muted) { player.mute(); }
+        else {
+          // en el móvil hay que activar el sonido y dar play en el mismo toque,
+          // si no el navegador para el vídeo
+          player.unMute(); player.setVolume(100);
+          if (!userPaused) player.playVideo();
+          setTimeout(function () {
+            // si el navegador no deja sonar con sonido, seguir sin sonido en vez de parar
+            var st = player.getPlayerState ? player.getPlayerState() : 1;
+            if (!userPaused && visible && st !== 1 && st !== 3) {
+              muted = true; player.mute(); player.playVideo(); setSoundIcon();
+            }
+          }, 900);
+        }
+      } else {
+        if (muted) { player.setMuted(true); player.setVolume(0); }
+        else {
+          player.setMuted(false); player.setVolume(1);
+          if (!userPaused) player.play().catch(function () {
+            muted = true; player.setMuted(true); player.setVolume(0);
+            player.play().catch(function () {}); setSoundIcon();
+          });
+        }
+      }
+      setSoundIcon();
     });
     btnPlay.addEventListener('click', function () {
       userPaused = !userPaused;
